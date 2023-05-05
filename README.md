@@ -393,3 +393,60 @@ ORDER BY
 
 ## Milestone 5
 
+### 1. Write a query to find monthly percent GMV growth in 2022. Which of the following statements is true regarding the result of the query?
+
+- GMV is decreasing July 2022 with -29% (minus growth) **[TRUE]**
+- In October 2022 the GMV is increasing much with 48.3% growth **[TRUE]**
+- All of GMV is having minus growth in each month in 2022 **[FALSE]**
+
+``` sql
+WITH
+  GMV_over_month AS (
+  SELECT
+    FORMAT_DATE('%Y-%m', transactions_timestamps) AS month,
+    SUM(t.total_amount) AS gmv
+  FROM
+    `da-labs-b4-ecommerce.b4_ecommerce_dataset_new.transactions` t
+  WHERE EXTRACT(YEAR FROM t.transactions_timestamps)  = 2022 AND t.status IN ('completed')
+  GROUP BY
+    1)
+SELECT
+  *,
+  ROUND((gmv - LAG(gmv) OVER(ORDER BY month ASC)) / LAG(gmv) OVER(ORDER BY month ASC) * 100,2) AS gmv_growth
+FROM
+  GMV_over_month
+ORDER BY
+  month
+
+```
+
+ **Table results:**
+ 
+ ![image](https://user-images.githubusercontent.com/93022524/236421784-52f4e388-9ce1-499e-9f18-452f9f128bf0.png)
+
+### 2. Write a query to the top 3 products in Clothing based on their GMV. Which of the following statements is true regarding the result of the query?
+
+- The top 3 product are Clothing D, Clothing A, and Clothing F **[TRUE]**
+- The top 3 product are Clothing D, Clothing A, and Clothing B **[FALSE]**
+- All the top 3 product has GMV more than 1.8B **[TRUE]**
+
+``` sql
+SELECT P.product_name,
+      SUM(T.total_amount) AS GMV
+FROM `da-labs-b4-ecommerce.b4_ecommerce_dataset_new.transactions` T
+LEFT JOIN `da-labs-b4-ecommerce.b4_ecommerce_dataset_new.transaction_items` TI ON T.transactions_id = TI.transactions_id
+LEFT JOIN `da-labs-b4-ecommerce.b4_ecommerce_dataset_new.products` P ON TI.product_id = P.product_id
+WHERE P.product_category IN ('Clothing')
+GROUP BY P.product_name
+ORDER BY GMV DESC
+LIMIT 3
+
+```
+
+ **Table results:**
+ 
+ ![image](https://user-images.githubusercontent.com/93022524/236422142-b8edfef1-751c-461f-9232-edad0804af9a.png)
+
+
+ 
+ 
