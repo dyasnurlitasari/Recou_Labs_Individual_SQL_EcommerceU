@@ -231,7 +231,7 @@ ORDER BY
 
  **Table results:**
  
- ![image](https://user-images.githubusercontent.com/93022524/236403402-27be6af0-dc37-491b-99ae-8d7d0abaf152.png)
+ ![image](https://user-images.githubusercontent.com/93022524/236406552-b2aac98e-d759-4a6d-8e78-a7a3da15e917.png)
 
  ### 2. Write a query to find the convertion rate from product view to complete for each traffic source. Sort from the hisghest convertion rate. Which of the following statements is true regarding the result of the query?
 - Direct traffic sources have the hisghest convertion rate ith 13.88% **[TRUE]**
@@ -269,7 +269,7 @@ ORDER BY
 
  **Table results:**
  
- ![image](https://user-images.githubusercontent.com/93022524/236403616-69eca3e1-37c9-493b-afc1-078828127f5f.png)
+![image](https://user-images.githubusercontent.com/93022524/236406689-7706b122-fedc-48bd-b5d0-4f296c64635d.png)
 
  ### 3. Write a query to find the average needed (in seconds) for customer after view the cart to finish choosing their address. Which of the following statements is true regarding the result of the query?
 
@@ -291,8 +291,105 @@ FROM (
 
  **Table results:**
  
- ![image](https://user-images.githubusercontent.com/93022524/236403868-5b2a6bf2-4506-4918-beed-d27c5dbd839f.png)
+![image](https://user-images.githubusercontent.com/93022524/236406783-4141f645-560a-4a59-8076-724ce12a2c2f.png)
 
- ## Milestone 4
 
+## Milestone 4
+
+### 1. Write a query to find top 5 high-demand product based on complete transaction. Which of the following statements is true regarding the result of the query?
+- Those 5 products are Mother&Care F, Health&Beauty C, Health&Beauty D, Health&Beauty E, and Clothing D **[TRUE]**
+- Those 5 products are Mother&Care F, Health&Beauty C, Health&Beauty D, Clothing A, and Clothing D **[FALSE]**
+- All those top 5 products are having demand (total transaction) above 1000 **[TRUE]**
+
+``` sql
+SELECT P.product_name,
+      COUNT(DISTINCT T.transactions_id) AS Total_Transaction
+FROM `da-labs-b4-ecommerce.b4_ecommerce_dataset.transactions` T
+LEFT JOIN `da-labs-b4-ecommerce.b4_ecommerce_dataset.transaction_items` TI ON T.transactions_id = TI.transactions_id
+LEFT JOIN `da-labs-b4-ecommerce.b4_ecommerce_dataset.products` P ON TI.product_id = P.product_id
+WHERE T.status = 'completed'
+GROUP BY P.product_name
+ORDER BY Total_Transaction DESC
+LIMIT 5
+
+```
+
+ **Table results:**
+
+![image](https://user-images.githubusercontent.com/93022524/236406006-11ec6ad7-5beb-434c-b3a6-d49febebef22.png)
+
+
+### 2. Write a query to find the voucher usage rate in 2022 for all transactions status. Which of the following statements is true regarding the result of the query?
+- The voucher usage rate is 68.37% **[TRUE]**
+- The voucher usage rate is 80.45% **[FALSE]**
+- The voucher usage rate is 47.88% **[FALSE]**
+
+``` sql
+WITH v1 AS 
+(
+  SELECT EXTRACT(year FROM transactions_timestamps) AS year,
+         count(voucher_id) AS voucher_usg
+  FROM `da-labs-b4-ecommerce.b4_ecommerce_dataset.transactions`
+  WHERE voucher_id in (1,2,3) AND 
+  transactions_timestamps between '2022-01-01' AND '2023-01-01'
+  GROUP BY 1
+),
+v2 AS 
+(
+  SELECT EXTRACT(year FROM transactions_timestamps) AS year,
+       count(transactions_id) AS total_trx
+FROM `da-labs-b4-ecommerce.b4_ecommerce_dataset.transactions`
+WHERE transactions_timestamps between '2022-01-01' AND '2023-01-01'
+GROUP BY 1
+)
+SELECT v1.year,
+       ROUND((v1.voucher_usg / v2.total_trx)*100,2) AS voucher_usage
+FROM v1
+JOIN v2
+ON v1.year = v2.year
+
+```
+
+ **Table results:**
  
+![image](https://user-images.githubusercontent.com/93022524/236406261-d26d0f5f-8b45-45db-8959-d47eb8631b3e.png)
+
+### 3. Write a query to find average number of unique product per transaction for each month in 2022. Which of the following statements is true regarding the result of the query?
+- The average unique product per transaction in Jan, Feb and March 2022 is around 3 products **[TRUE]**
+- The average unique product per transaction in Jun, Jul and August 2022 is around 4 products **[FALSE]**
+- There is no average unique product per transaction that is more than 6 each month **[TRUE]**
+
+``` sql
+SELECT 
+    FORMAT_DATE('%Y-%m', transaction_date) AS month,
+    AVG(unique_products) AS avg_unique_products_per_transaction
+FROM (
+    SELECT 
+        t.transactions_id, 
+        COUNT(DISTINCT ti.product_id) AS unique_products,
+        DATE_TRUNC(t.transactions_timestamps, MONTH) AS transaction_date
+    FROM 
+        `da-labs-b4-ecommerce.b4_ecommerce_dataset.transactions` AS t
+    JOIN
+     `da-labs-b4-ecommerce.b4_ecommerce_dataset.transaction_items` AS ti
+    ON
+        t.transactions_id=ti.transactions_id
+    WHERE 
+        EXTRACT(YEAR FROM t.transactions_timestamps) = 2022
+    GROUP BY 
+        1, 3
+)
+GROUP BY 
+    1
+ORDER BY 
+    1;
+
+```
+
+ **Table results:**
+
+![image](https://user-images.githubusercontent.com/93022524/236405856-c8663c8b-0bfd-408e-9ae4-ce0db0962ceb.png)
+
+
+## Milestone 5
+
